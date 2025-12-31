@@ -27,6 +27,9 @@ function getAuthTypeFromEnv(): AuthType | undefined {
   if (process.env['GEMINI_API_KEY']) {
     return AuthType.USE_GEMINI;
   }
+  if (process.env['OLLAMA_HOST']) {
+    return AuthType.USE_OLLAMA;
+  }
   return undefined;
 }
 
