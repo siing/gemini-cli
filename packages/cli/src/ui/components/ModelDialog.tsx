@@ -5,7 +5,7 @@
  */
 
 import type React from 'react';
-import { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState , useEffect } from 'react';
 import { Box, Text } from 'ink';
 import {
   PREVIEW_GEMINI_MODEL,
@@ -18,6 +18,7 @@ import {
   ModelSlashCommandEvent,
   logModelSlashCommand,
   getDisplayString,
+  AuthType,
 } from '@google/gemini-cli-core';
 import { useKeypress } from '../hooks/useKeypress.js';
 import { theme } from '../semantic-colors.js';
@@ -32,12 +33,38 @@ interface ModelDialogProps {
 export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
   const config = useContext(ConfigContext);
   const [view, setView] = useState<'main' | 'manual'>('main');
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
 
   // Determine the Preferred Model (read once when the dialog opens).
   const preferredModel = config?.getModel() || DEFAULT_GEMINI_MODEL_AUTO;
 
   const shouldShowPreviewModels =
     config?.getPreviewFeatures() && config.getHasAccessToPreviewModel();
+
+  const isOllama =
+    config?.getContentGeneratorConfig()?.authType === AuthType.USE_OLLAMA;
+
+  useEffect(() => {
+    if (isOllama) {
+      const fetchModels = async () => {
+        try {
+          const host =
+            process.env['OLLAMA_HOST'] || 'http://localhost:11434/v1';
+          const response = await fetch(`${host}/models`);
+          if (response.ok) {
+            const data = (await response.json()) as { data: Array<{ id: string }> };
+            if (data && Array.isArray(data.data)) {
+              const models = data.data.map((m) => m.id);
+              setOllamaModels(models);
+            }
+          }
+        } catch (_e) {
+          // ignore
+        }
+      };
+      void fetchModels();
+    }
+  }, [isOllama]);
 
   const manualModelSelected = useMemo(() => {
     const manualModels = [
@@ -67,6 +94,23 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
   );
 
   const mainOptions = useMemo(() => {
+    if (isOllama) {
+      if (ollamaModels.length === 0) {
+        return [
+          {
+            value: 'loading',
+            title: 'Loading Ollama models...',
+            key: 'loading',
+          },
+        ];
+      }
+      return ollamaModels.map((model) => ({
+        value: model,
+        title: model,
+        key: model,
+      }));
+    }
+
     const list = [
       {
         value: DEFAULT_GEMINI_MODEL_AUTO,
@@ -95,9 +139,11 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
       });
     }
     return list;
-  }, [shouldShowPreviewModels, manualModelSelected]);
+  }, [shouldShowPreviewModels, manualModelSelected, isOllama, ollamaModels]);
 
   const manualOptions = useMemo(() => {
+    if (isOllama) return [];
+
     const list = [
       {
         value: DEFAULT_GEMINI_MODEL,
@@ -131,7 +177,7 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
       );
     }
     return list;
-  }, [shouldShowPreviewModels]);
+  }, [shouldShowPreviewModels, isOllama]);
 
   const options = view === 'main' ? mainOptions : manualOptions;
 
@@ -171,7 +217,10 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
 
   // Do not show any header or subheader since it's already showing preview model
   // options
-  if (shouldShowPreviewModels) {
+  if (isOllama) {
+    header = undefined;
+    subheader = undefined;
+  } else if (shouldShowPreviewModels) {
     header = undefined;
     subheader = undefined;
     // When a user has the access but has not enabled the preview features.
