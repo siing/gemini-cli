@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
+  AuthType,
   IdeClient,
   IdeConnectionEvent,
   IdeConnectionType,
@@ -12,7 +13,7 @@ import {
   type Config,
   StartSessionEvent,
   logCliConfiguration,
-  startupProfiler,
+  startupProfiler
 } from '@google/gemini-cli-core';
 import { type LoadedSettings } from '../config/settings.js';
 import { performInitialAuth } from './auth.js';
@@ -39,7 +40,7 @@ export async function initializeApp(
   const authHandle = startupProfiler.start('authenticate');
   const authError = await performInitialAuth(
     config,
-    settings.merged.security?.auth?.selectedType,
+    settings.merged.security?.auth?.selectedType as AuthType | undefined,
   );
   authHandle?.end();
   const themeError = validateTheme(settings);

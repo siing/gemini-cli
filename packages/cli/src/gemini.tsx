@@ -363,7 +363,8 @@ export async function main() {
   // Set a default auth type if one isn't set or is set to a legacy type
   if (
     !settings.merged.security?.auth?.selectedType ||
-    settings.merged.security?.auth?.selectedType === AuthType.LEGACY_CLOUD_SHELL
+    (settings.merged.security?.auth?.selectedType as AuthType) ===
+      AuthType.LEGACY_CLOUD_SHELL
   ) {
     if (
       process.env['CLOUD_SHELL'] === 'true' ||
@@ -405,18 +406,20 @@ export async function main() {
           if (partialConfig.isInteractive()) {
             // Validate authentication here because the sandbox will interfere with the Oauth2 web redirect.
             const err = validateAuthMethod(
-              settings.merged.security.auth.selectedType,
+              settings.merged.security.auth.selectedType as AuthType,
             );
             if (err) {
               throw new Error(err);
             }
 
             await partialConfig.refreshAuth(
-              settings.merged.security.auth.selectedType,
+              settings.merged.security.auth.selectedType as AuthType,
             );
           } else {
             const authType = await validateNonInteractiveAuth(
-              settings.merged.security?.auth?.selectedType,
+              settings.merged.security?.auth?.selectedType as
+                | AuthType
+                | undefined,
               settings.merged.security?.auth?.useExternal,
               partialConfig,
               settings,
@@ -519,7 +522,7 @@ export async function main() {
       const authType = settings.merged.security?.auth?.selectedType;
       if (authType) {
         try {
-          await config.refreshAuth(authType);
+          await config.refreshAuth(authType as AuthType);
         } catch (e) {
           // Auth failed - continue without summary generation capability
           debugLogger.debug(
@@ -582,7 +585,10 @@ export async function main() {
       config.isBrowserLaunchSuppressed()
     ) {
       // Do oauth before app renders to make copying the link possible.
-      await getOauthClient(settings.merged.security.auth.selectedType, config);
+      await getOauthClient(
+        settings.merged.security.auth.selectedType as AuthType,
+        config,
+      );
     }
 
     if (config.getExperimentalZedIntegration()) {
@@ -678,7 +684,7 @@ export async function main() {
     );
 
     const authType = await validateNonInteractiveAuth(
-      settings.merged.security?.auth?.selectedType,
+      settings.merged.security?.auth?.selectedType as AuthType | undefined,
       settings.merged.security?.auth?.useExternal,
       config,
       settings,

@@ -1253,13 +1253,20 @@ const SETTINGS_SCHEMA = {
         showInDialog: false,
         properties: {
           selectedType: {
-            type: 'string',
+            type: 'enum',
             label: 'Selected Auth Type',
             category: 'Security',
             requiresRestart: true,
             default: undefined as AuthType | undefined,
             description: 'The currently selected authentication type.',
-            showInDialog: false,
+            showInDialog: true,
+            options: [
+              { value: 'oauth-personal', label: 'Google (OAuth)' },
+              { value: 'gemini-api-key', label: 'Gemini API Key' },
+              { value: 'vertex-ai', label: 'Vertex AI' },
+              { value: 'compute-default-credentials', label: 'ADC' },
+              { value: 'ollama', label: 'Ollama' },
+            ],
           },
           enforcedType: {
             type: 'string',

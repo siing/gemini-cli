@@ -144,7 +144,7 @@ export class GeminiAgent {
     if (this.settings.merged.security?.auth?.selectedType) {
       try {
         await config.refreshAuth(
-          this.settings.merged.security.auth.selectedType,
+          this.settings.merged.security.auth.selectedType as AuthType,
         );
         isAuthenticated = true;
       } catch (e) {

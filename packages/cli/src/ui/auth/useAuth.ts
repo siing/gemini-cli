@@ -6,12 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { LoadedSettings } from '../../config/settings.js';
-import {
-  AuthType,
-  type Config,
-  loadApiKey,
-  debugLogger,
-} from '@google/gemini-cli-core';
+import { AuthType, type Config, loadApiKey } from '@google/gemini-cli-core';
 import { getErrorMessage } from '@google/gemini-cli-core';
 import { AuthState } from '../types.js';
 import { validateAuthMethod } from '../../config/auth.js';
@@ -80,7 +75,7 @@ export const useAuthCommand = (settings: LoadedSettings, config: Config) => {
         return;
       }
 
-      const authType = settings.merged.security?.auth?.selectedType;
+      const authType = settings.merged.security?.auth?.selectedType as AuthType;
       if (!authType) {
         if (process.env['GEMINI_API_KEY']) {
           onAuthError(
@@ -120,9 +115,6 @@ export const useAuthCommand = (settings: LoadedSettings, config: Config) => {
 
       try {
         await config.refreshAuth(authType);
-
-        debugLogger.log(`Authenticated via "${authType}".`);
-        setAuthError(null);
         setAuthState(AuthState.Authenticated);
       } catch (e) {
         onAuthError(`Failed to login. Message: ${getErrorMessage(e)}`);
